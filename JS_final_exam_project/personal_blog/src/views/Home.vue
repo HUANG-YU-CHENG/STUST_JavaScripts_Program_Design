@@ -1,6 +1,6 @@
 <script setup>
-import {store} from '../store'
-import supabase from '../supabase';
+import { store } from '../store'
+import { onMounted } from 'vue'
 
 const getWordsNumber = (str) => {//抓取字數
   if (!str){
@@ -13,15 +13,9 @@ const getWordsNumber = (str) => {//抓取字數
   return chineseCount + englishCount;
 }
 
-const fetchPosts = async() =>{//非同步處理 從supabase資料庫抓取posts表的所有紀錄
-let { data: posts, error } = await supabase
-    .from('posts')
-    .select()
-    if (error) throw new Error(error)//錯誤處理
-    store.posts = posts
-}
-
-fetchPosts()
+onMounted(() => {
+  store.fetchPosts()
+})
 </script>
 
 <template>

@@ -1,26 +1,30 @@
 <script setup>
 import { reactive } from 'vue';
-import {useRoute} from 'vue-router'
-import {store} from "../store"
-import supabase from '../supabase';
-
+import { useRoute } from 'vue-router'
+import { store } from "../store"
+import { db } from '../firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 const route = useRoute()
-let post = reactive({});
+let post = reactive({})
 
-const fetchPost = async(id) =>{
-    const found = store.posts.find(x => x.id === parseInt(route.params.id))
-    if(found){ //檢查文章是否有在posts資料庫裡面 若沒有則直接返回 避免重複請求
+const fetchPost = async(id) => {
+    // 先檢查 store 中是否已有該文章
+    const found = store.posts.find(x => x.id === id)
+    if(found) {
+        Object.assign(post, found)
         return
     }
-    let { data, error } = await supabase //抓取文章數據
-        .from('posts')
-        .select() 
-        .eq('id',id)//用文章ID過濾
-        .single()//抓取單個文章數據
-    if (error) throw new Error(error)
-    Object.assign(post,data)
-    store.posts = [...store.posts,post]
+
+    // 從 Firebase 獲取文章
+    const docRef = doc(db, 'posts', id)
+    const docSnap = await getDoc(docRef)
+    
+    if (docSnap.exists()) {
+        const data = { id: docSnap.id, ...docSnap.data() }
+        Object.assign(post, data)
+        store.posts = [...store.posts, post]
+    }
 }
 
 fetchPost(route.params.id)
